@@ -5,8 +5,9 @@
 
 
 (* ::Input::Initialization:: *)
-libDir = ".";
-Quiet[NotebookEvaluate[FileNameJoin[{NotebookDirectory[],libDir, "Ricci_sq.m"}]]]
+Quiet[NotebookEvaluate[FileNameJoin[{NotebookDirectory[], ".", "LibGet.m"}]]];
+
+ImportLibs["Ricci_sq"];
 
 
 (* ::Section:: *)
