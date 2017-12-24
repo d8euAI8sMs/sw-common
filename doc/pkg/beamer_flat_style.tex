@@ -1,0 +1,40 @@
+\setbeamertemplate{background canvas}[vertical shading][bottom=red!2,top=green!2]
+
+\usetheme{Ilmenau}
+\usecolortheme{spruce}
+\usefonttheme[onlysmall]{serif}
+
+\setbeamercolor{title in head/foot}{parent=palette primary}
+\setbeamercolor{author in head/foot}{parent=palette primary}
+\setbeamercolor{institute in head/foot}{parent=palette primary}
+
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor*{enumerate item}{fg=black}
+
+\setbeamercolor*{bibliography item}{fg=black}
+\setbeamercolor*{bibliography entry title}{fg=black}
+\setbeamercolor*{bibliography entry author}{fg=black}
+\setbeamercolor*{bibliography entry location}{fg=black}
+\setbeamercolor*{bibliography entry note}{fg=black}
+
+\setbeamertemplate{enumerate item}[default]
+\setbeamertemplate{bibliography entry title}{}
+\setbeamertemplate{bibliography entry location}{}
+\setbeamertemplate{bibliography entry note}{}
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{title}%
+    \hspace{1em}%
+    \insertframenumber/\inserttotalframenumber
+}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
