@@ -1016,7 +1016,7 @@ FUNCTION {format.url}
 { url empty$
     { "" }
     { after.sentence 'output.state :=
-      "URL:  " url * "" *
+      "URL:  \BibUrl{" url * "}" *
     }
   if$
 }
