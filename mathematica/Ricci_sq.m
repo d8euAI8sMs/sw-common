@@ -17,8 +17,7 @@ S[z_] := z //Simplify
 Eq[l_,b_] := Module[{bb,n,x,i,db},
 	bb = b;
 	n = Length[bb];
-	db = D[l,b] - Sum[D[D[l,\!\(
-\*SubscriptBox[\(\[PartialD]\), \(bb[\([i]\)]\)]\ b\)], bb[[i]]], {i,n}] //S
+	db = D[l,b] - Sum[D[D[l, D[b, bb[[i]]]], bb[[i]]], {i,n}] //S
 ]
 
 
@@ -160,8 +159,7 @@ Approx[h_] := Module[{dgd,dg,ds,i,j,k,s},
 ]
 
 
-Spur[T_] := \!\(
-\*UnderoverscriptBox[\(\[Sum]\), \(kk = 1\), \(3\)]\(hh[kk, kk]\ T[\([kk, kk]\)]\)\) //Simplify
+Spur[T_] := Sum[hh[kk,kk] T[[kk,kk]], {kk,3}] //Simplify
 
 CovDif[Vels_] := Module[{DG,ss},
 	Do[Do[
@@ -189,8 +187,7 @@ Pr[V1_,V2_] := Module[{l1,l2,rr},
 Scal[V1_,V2_] := Module[{},
 	Sum[Sum[gg[i,j] V1[[i]] V2[[j]], {j,3}], {i,3}] //Simplify
 ]
-Lie[V_,f_] := Module[{}, \!\(
-\*UnderoverscriptBox[\(\[Sum]\), \(i = 1\), \(3\)]\(V[\([i]\)]\ D[f, x[i]]\)\) //Simplify]
+Lie[V_,f_] := Module[{}, Sum[V[[i]] D[f,x[i]], {i,3}] //Simplify]
 
 Lap[f_] := Module[{},
 	Sum[D[Sum[gd hh[i,j] D[f, x[j]], {j,3}], x[i]] / gd, {i,3}] //Simplify
