@@ -5,9 +5,9 @@
 
 
 (* ::Input::Initialization:: *)
-Quiet[NotebookEvaluate[FileNameJoin[{NotebookDirectory[], ".", "LibGet.m"}]]];
+If[$FrontEnd =!= Null, AppendTo[$Path, FileNameJoin[{NotebookDirectory[], "."}]]];
 
-ImportLibs["Ricci_sq"];
+(Once@Get[#] &) /@ { "Ricci_sq.m" };
 
 
 (* ::Section:: *)
