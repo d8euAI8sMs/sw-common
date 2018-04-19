@@ -18,7 +18,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{graphicx}
 \usepackage{subfig}
-\usepackage[titletoc,toc]{appendix}
+\usepackage[titletoc,title]{appendix}
 
 \newcommand*{\docroot}{.}
 \newenvironment{withdocroot}[1][.]{\renewcommand*{\docroot}{#1}}{}
@@ -34,3 +34,4 @@
 \makeatletter\appto{\appendices}{\def\Hy@chapapp{Appendix}}\makeatother
 \renewcommand{\appendixtocname}{Приложения}
 \renewcommand{\appendixpagename}{Приложения}
+\newcommand*{\Appendixautorefname}{прил.}
