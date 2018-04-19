@@ -20,8 +20,12 @@
 \usepackage{subfig}
 \usepackage[titletoc,toc]{appendix}
 
+\newcommand*{\docroot}{.}
+\newenvironment{withdocroot}[1][.]{\renewcommand*{\docroot}{#1}}{}
+\newcommand*{\includedoc}[2]{\begin{withdocroot}[#1]\input{\docroot/#2}\end{withdocroot}}
+
 \DeclareGraphicsExtensions{.pdf,.png,.jpg,.PNG}
-\graphicspath{{./img/}}
+\graphicspath{{./img/}{\docroot/img/}}
 \captionsetup[figure]{justification=centering}
 \renewcommand{\thesubfigure}{\asbuk{subfigure}}
 \DeclareCaptionLabelSeparator{dotseparator}{. }
