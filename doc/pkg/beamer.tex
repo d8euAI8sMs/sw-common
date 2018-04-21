@@ -18,6 +18,12 @@
 \usepackage{subfig}
 \usepackage{appendix}
 
+%% workaround for the \@ifundefined macro update in the 2018 LaTeX release
+%% should be fixed in one of the next releases of caption.sty
+\makeatletter
+\let\@@magyar@captionfix\relax
+\makeatother
+
 \DeclareGraphicsExtensions{.pdf,.png,.jpg,.PNG}
 \graphicspath{{./img/}}
 \captionsetup[figure]{justification=centering}
