@@ -17,6 +17,12 @@
 \usepackage{graphicx}
 \usepackage{subfig}
 \usepackage{appendix}
+\usepackage{ragged2e} %% for \justifying
+
+%% add hyphenation and word wrap to beamer slides
+%% \justifying should explicitely be specified for
+%% 'enumerate', 'itemize', etc.
+\apptocmd{\frame}{}{\justifying}{}
 
 %% workaround for the \@ifundefined macro update in the 2018 LaTeX release
 %% should be fixed in one of the next releases of caption.sty
