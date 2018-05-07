@@ -24,6 +24,13 @@
 %% 'enumerate', 'itemize', etc.
 \apptocmd{\frame}{}{\justifying}{}
 
+%% add braces around equation number
+\makeatletter
+\let\oldtheequation\theequation
+\renewcommand\tagform@[1]{\maketag@@@{\ignorespaces#1\unskip\@@italiccorr}}
+\renewcommand\theequation{(\oldtheequation)}
+\makeatother
+
 %% workaround for the \@ifundefined macro update in the 2018 LaTeX release
 %% should be fixed in one of the next releases of caption.sty
 \makeatletter
