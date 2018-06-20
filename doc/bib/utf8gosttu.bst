@@ -974,7 +974,7 @@ FUNCTION {editor.organization.after}
 FUNCTION {format.url}
 { url empty$
     { "" }
-    { after.sentence 'output.state :=
+    { after.block 'output.state :=
       "\BibUrl{ " url * "}" *
     }
   if$
@@ -1006,7 +1006,7 @@ FUNCTION {article}
   format.pages.page output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1031,7 +1031,7 @@ FUNCTION {book}
   format.pages.page output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1050,7 +1050,7 @@ FUNCTION {booklet}
   format.date output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1080,7 +1080,7 @@ FUNCTION {inbook}
   format.pages.page output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1106,7 +1106,7 @@ FUNCTION {incollection}
   format.pages.page output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1141,7 +1141,7 @@ FUNCTION {inproceedings}
   format.pages.page output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1182,7 +1182,7 @@ FUNCTION {manual}
   format.date output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1217,7 +1217,7 @@ FUNCTION {misc}
   format.date output
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1237,7 +1237,7 @@ FUNCTION {phdthesis}
   new.block
   format.pages.page output
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1263,7 +1263,7 @@ FUNCTION {proceedings}
   if$
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1286,7 +1286,7 @@ FUNCTION {techreport}
   format.date "year" output.check
   new.block
   note output
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
@@ -1301,7 +1301,7 @@ FUNCTION {unpublished}
   editor.organization.after
   new.block
   note "note" output.check
-  new.sentence
+  new.block
   format.url output
   format.annote output
   fin.entry
