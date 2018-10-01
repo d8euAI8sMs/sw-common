@@ -19,10 +19,14 @@
 \usepackage{graphicx}
 \usepackage{subfig}
 \usepackage[titletoc,title]{appendix}
+\usepackage{subfiles}
 
-\newcommand*{\docroot}{.}
-\newenvironment{withdocroot}[1][.]{\renewcommand*{\docroot}{#1}}{}
-\newcommand*{\includedoc}[2]{\begin{withdocroot}[#1]\input{\docroot/#2}\end{withdocroot}}
+\newcommand{\onlyinsubfile}[1]{#1}
+\newcommand{\notinsubfile}[1]{}
+\newcommand{\makedocroot}[0]{
+    \renewcommand{\onlyinsubfile}[1]{}
+    \renewcommand{\notinsubfile}[1]{##1}
+}
 
 \DeclareGraphicsExtensions{.pdf,.png,.jpg,.PNG}
 \graphicspath{{./img/}{\docroot/img/}}
