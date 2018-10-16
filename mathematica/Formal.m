@@ -94,7 +94,8 @@ RR=\[CapitalRHacek];
 \[CapitalRHacek][g_,i_,j_] := Module[{l},USum[\[CapitalRHacek][g,l,i,l,j],l]];
 \[CapitalRHacek][g_] := Module[{i,j},USum[g[i,j]\[CapitalRHacek][g,i,j],i,j]];
 
-TensorBr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,j_]:=Module[{k,l,m,n},SSum[TensorLeviCivita3[i,l,k]TensorLeviCivita3[j,n,m]\[Eth][g[l,n],k,m],l,k,n,m]];
+TensorBr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,j_]:=Module[{k,l,m,n},SSum[TensorLeviCivita3[][i,l,k]TensorLeviCivita3[][j,n,m]\[Eth][g[l,n],k,m],l,k,n,m]];
+TensorSr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,m_]:=Module[{k,l},SSum[TensorLeviCivita3[][i,k,l]\[Eth][g[m,k],l],k,l]];
 
 SSum/:MakeBoxes[SSum[x_,r__],StandardForm]:=Module[{i,t,ssym},
 	t=RowBox[{}];
@@ -170,16 +171,16 @@ TensorReplaceRepeated[e_,r_] := TensorMap[e,(#//.r &)];
 	\:0422\:043e\:0433\:0434\:0430 \:0441\:0443\:043c\:043c\:0430 \:043f\:043e j \:0431\:0443\:0434\:0435\:0442 \:0443\:0441\:0442\:0440\:0430\:043d\:0435\:043d\:0430.
  *)
 TensorSimplifyDeltaMapper[e_,idx_]:=(e//.{
-	k_ x:Tensor[\[Delta],a__][i_,j_]:>If[MemberQ[idx,i],Sow[i];(k/.i->j),
+	k_ x:Tensor[TensorDeltaSymbol,a__][i_,j_]:>If[MemberQ[idx,i],Sow[i];(k/.i->j),
 		If[MemberQ[idx,j],Sow[j];(k/.j->i),k x]
 	],
-	Tensor[\[Delta],a__][i_,j_]:>If[MemberQ[idx,i],Sow[i];1,If[MemberQ[idx,j],Sow[j];1]]
+	Tensor[TensorDeltaSymbol,a__][i_,j_]:>If[MemberQ[idx,i],Sow[i];1,If[MemberQ[idx,j],Sow[j];1]]
 });
 TensorSimplifyMetricsMapper[t:Tensor[_,0,2]][e_,idx_]:=(e//.{
-	t[a_,b_]TensorContr[t][b_,c_]:>(Sow[b];td[c,a]),
-	t[a_,b_]TensorContr[t][c_,b_]:>(Sow[b];td[c,a]),
-	t[b_,a_]TensorContr[t][b_,c_]:>(Sow[b];td[c,a]),
-	t[b_,a_]TensorContr[t][c_,b_]:>(Sow[b];td[c,a])
+	t[a_,b_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[c,a]),
+	t[a_,b_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[c,a]),
+	t[b_,a_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[c,a]),
+	t[b_,a_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[c,a])
 });
 TensorSimplifyHelper[idx_,Plus[a_,b__],r_] := Plus@@((TensorSimplifyHelper[idx,#,r]&)/@{a,b});
 TensorSimplifyHelper[idx_,SSum[e_,l__],r_] := TensorSimplifyHelper[idx~Join~{l},e,r];
@@ -229,18 +230,22 @@ TopoSortInv[l_,p_,c_,vars_]:=Module[{ls,l0,r1,r2,l1,l2},
 	\:0438 \:043e\:0431\:044b\:0447\:043d\:044b\:0435 \:043f\:0440\:043e\:0438\:0437\:0432\:043e\:0434\:043d\:044b\:0435 \:0442\:0435\:043d\:0437\:043e\:0440\:043e\:0432 \:043f\:0440\:043e\:0438\:0437\:0432\:043e\:043b\:044c\:043d\:043e\:0433\:043e \:043f\:043e\:0440\:044f\:0434\:043a\:0430.
 	\:041f\:043e\:043b\:0435\:0437\:043d\:043e \:043f\:0440\:0438 \:0440\:0430\:0431\:043e\:0442\:0435 \:0441 \:043c\:0435\:0442\:0440\:0438\:043a\:0430\:043c\:0438.
  *)
-Tensor2TopoSortMapper[e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
+Tensor2TopoSortMapper[e_,vars_]:=Tensor2TopoSortMapper[(True&)][e,vars];
+Tensor2TopoSortMapper[symQ_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
 	r1={};r2={};
 	n=1;
-	ic[\[Eth][a_,k__]]:=Module[{},
+	ic[x:\[Eth][a_,k__]]:=Module[{},
 		ic[a];
 		(AppendTo[r1,#]&)/@{k};
-		(AppendTo[r2,#]&)/@Permutations[Table[ni,{ni,n,n+Length[{k}]-1}],{2}];
+		If[symQ[x],(AppendTo[r2,#]&)/@Permutations[Table[ni,{ni,n,n+Length[{k}]-1}],{2}]];
 		n+=Length[{k}]];
-	ic[Tensor[a__][i_,j_]]:=Module[{},
+	ic[x:Tensor[a__][i_,j_]]:=Module[{},
 		(AppendTo[r1,#]&)/@{i,j};
 		(AppendTo[r2,#]&)/@{{n,n+1}};
-		n+=2];
+		n+=2]/;symQ[x];
+	ic[Tensor[a__][ij__]]:=Module[{},
+		(AppendTo[r1,#]&)/@{ij};
+		n+=Length[{ij}]];
 	ic[a_ b_]:=Module[{},ic[a];ic[b]];
 	ic[e];
 	r0=TopoSortInv[r1,r2,(-AlphabeticOrder[ToString[#1],ToString[#2]]&),vars];
@@ -248,9 +253,9 @@ Tensor2TopoSortMapper[e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
 	ia[\[Eth][a_,k__]]:=Module[{y},
 	y=\[Eth]@@Join[{ia[a]},r0[[n;;n+Length[{k}]-1]]];
 	n+=Length[{k}];y];
-	ia[Tensor[a__][i_,j_]]:=Module[{y},
-		y=Tensor[a][r0[[n]],r0[[n+1]]];
-		n+=2;y];
+	ia[Tensor[a__][ij__]]:=Module[{y},
+		y=Tensor[a]@@r0[[n;;n+Length[{ij}]-1]];
+		n+=Length[{ij}];y];
 	ia[a_ b_]:=Module[{},ia[a]ia[b]];
 	ia[a_]:=a;
 	ia[e]
