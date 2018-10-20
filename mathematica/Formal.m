@@ -22,15 +22,29 @@ DD[DD[g_,j__],i__]:=DD[g,j,i];
 DD[g_ h_,i_,j__]:= DD[DD[g,i]h+g DD[h,i],j];
 DD[g_ h_,i_]:= DD[g,i]h+g DD[h,i];
 
+CovQ[i_Cov]:=True;
+CovQ[\[Eth][a_,i__]]:=Or@@(CovQ/@{i});
+CovQ[_]:=False;
+Cov[i_Cov]:=i;
+Cov[\[Eth][a_,i__]]:=\[Eth][a,##]&@@(Cov/@{i});
+Uncov[Cov[i_]]:=i;
+Uncov[\[Eth][a_,i__]]:=\[Eth][a,##]&@@(Uncov/@{i});
+Uncov[i_]:=i;
+
+CovExpand[e_]:=e//.{\[Eth][(x:Tensor[a_,cont_,cov_])[idx__],i___,Cov[j_],Shortest[k___]]:>Module[{l,p,t,m,cov0=cov~Join~Range[Length[cov]+1,Length[cov]+Length[{i}]],idx0={idx}~Join~{i},x0},
+x0[idx1_]:=(\[Eth]@@({x@@idx1[[1;;Length[{idx}]]]}~Join~idx1[[Length[{idx}]+1;;Length[idx1]]]))/.{\[Eth][g_]:>g};
+\[Eth][(\[Eth][x0[idx0],j]/.{\[Eth][g_]:>g})-Sum[SSum[x0[MapAt[If[CovQ[#],Cov[m],m]&,idx0,l]]TensorChristoffel[][m,j,Uncov[idx0[[l]]]],m],{l,cov0}]+Sum[SSum[x0[MapAt[If[CovQ[#],Cov[m],m]&,idx0,l]]TensorChristoffel[][Uncov[idx0[[l]]],j,m],m],{l,cont}],k]/.{\[Eth][g_]:>g}]}
+
 DD2DRules=\[Eth]2DRules;
-\[Eth]2DRules[v_]:={DD[a_,i__]:>D@@Join[{a},(v[[#+1]]&)/@{i}]};
+\[Eth]2DRules[v_]:={DD[a_,i__]:>D@@Join[{a},(v[[Uncov[#]+1]]&)/@{i}]};
+\[Eth]2DRules[v_,conds_]:={x:DD[a_,i__]:>D@@Join[{a},(v[[Uncov[#]+1]]&)/@{i}]};
 
 EnableFeature[Formatter[\[Eth]]]:=Module[{},
-	\[Eth]/:MakeBoxes[\[Eth][g_,a__Integer],StandardForm]:=Module[{},
-		SubscriptBox[ToBoxes[g],ToBoxes[","~StringJoin~(ToString/@{a})]]
+	\[Eth]/:MakeBoxes[\[Eth][g_,a__?(MatchQ[#,(_Integer|Cov[_Integer])]&)],StandardForm]:=Module[{},
+		SubscriptBox[ToBoxes[g],ToBoxes[StringJoin[((StringJoin[{If[MatchQ[#,{__Cov}],";",","]}~Join~(ToString@*Uncov/@#)])&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)]]]]
 	];
 	\[Eth]/:MakeBoxes[\[Eth][g_,a__],StandardForm]:=Module[{},
-		SubscriptBox[ToBoxes[g],RowBox[{","}~Join~Table[ToBoxes[$t],{$t,{a}}]]]
+		SubscriptBox[ToBoxes[g],RowBox[Flatten[(({If[MatchQ[#,{__Cov}],";",","]}~Join~(ToBoxes@*Uncov/@#))&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)],1]]]
 	];
 ];
 
@@ -40,12 +54,22 @@ Tensor[g_,cont_Integer]:=Tensor[g,cont,0];
 
 TensorDeltaSymbol=\[Delta];
 TensorLeviCivitaSymbol=\[Epsilon];
+TensorChristoffelSymbol=\[CapitalGamma];
+TensorRimanChristoffelSymbol=\[CapitalRHacek];
 
 TensorDelta[cont_:1,cov_:1]:=Tensor[TensorDeltaSymbol,cont,cov];
 TensorDeltaValue[i_,j_]:=If[i==j,1,0];
 
 TensorLeviCivita3[cont_:3,cov_:0]:=Tensor[TensorLeviCivitaSymbol,cont,cov];
 TensorLeviCivita3Value[i_,j_,k_]:=LeviCivitaTensor[3][[i,j,k]];
+
+TensorChristoffel[cont_:1,cov_:2]:=Tensor[TensorChristoffelSymbol,cont,cov];
+TensorChristoffelValue[g_][i_,j_,k_]:=\[CapitalGamma][g,i,j,k];
+
+TensorRimanChristoffel[cont_:1,cov_:3]:=Tensor[TensorRimanChristoffelSymbol,cont,cov];
+TensorRimanChristoffelValue[g_][i_,j_,k_,l_]:=\[CapitalRHacek][g,i,j,k,l];
+TensorRicciChristoffel[cont_:0,cov_:2]:=Tensor[TensorRimanChristoffelSymbol,cont,cov];
+TensorRicciChristoffelValue[g_][i_,j_]:=\[CapitalRHacek][g,i,j];
 
 TensorCov[Tensor[g_,cont_,cov_],a__]:=Tensor[g,Select[cont,(!MemberQ[{a},#]&)],cov~Join~{a}]/;ContainsAll[cont~Join~cov,{a}];
 TensorCov[Tensor[g_,cont_,cov_]]:=Tensor[g,{},cont~Join~cov];
@@ -94,8 +118,8 @@ RR=\[CapitalRHacek];
 \[CapitalRHacek][g_,i_,j_] := Module[{l},USum[\[CapitalRHacek][g,l,i,l,j],l]];
 \[CapitalRHacek][g_] := Module[{i,j},USum[g[i,j]\[CapitalRHacek][g,i,j],i,j]];
 
-TensorBr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,j_]:=Module[{k,l,m,n},SSum[TensorLeviCivita3[][i,l,k]TensorLeviCivita3[][j,n,m]\[Eth][g[l,n],k,m],l,k,n,m]];
-TensorSr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,m_]:=Module[{k,l},SSum[TensorLeviCivita3[][i,k,l]\[Eth][g[m,k],l],k,l]];
+TensorBr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,j_]:=Module[{k,l,m,n},SSum[TensorLeviCivita3[][i,l,k]TensorLeviCivita3[][j,n,m]Cov[\[Eth][g[l,n],k,m]],l,k,n,m]];
+TensorSr[g_?(TensorQAlt[#,2]&&TensorCovQ[#]&)][i_,m_]:=Module[{k,l},SSum[TensorLeviCivita3[][i,k,l]Cov[\[Eth][g[m,k],l]],k,l]];
 
 SSum/:MakeBoxes[SSum[x_,r__],StandardForm]:=Module[{i,t,ssym},
 	t=RowBox[{}];
@@ -126,7 +150,7 @@ SSumUniteRuleHelper[a_,b_,r1_,r2_]:=Module[{i,t1,t2,tu,v1,v2,s1,s2,l,r},
 	SSum@@({s1+s2}~Join~tu[[1;;l]])
 ];
 SSumUniteRules={
-	SSum[a_,r1__]SSum[b_,r2__]:>Module[{t1=Table[Unique["i"],Length[{r1}]],t2=Table[Unique["i"],Length[{r2}]],v},SSum[(a/.Table[{r1}[[v]]->t1[[v]],{v,Length[{r1}]}]) (b/.Table[{r2}[[v]]->t2[[v]],{v,Length[{r2}]}]),t1,t2]],
+	SSum[a_,r1__]SSum[b_,r2__]:>Module[{t1=Table[Unique["i"],Length[{r1}]],t2=Table[Unique["i"],Length[{r2}]],v},SSum@@Join[{(a/.Table[{r1}[[v]]->t1[[v]],{v,Length[{r1}]}]) (b/.Table[{r2}[[v]]->t2[[v]],{v,Length[{r2}]}])},t1,t2]],
 	k_ SSum[a_,r1__]+ SSum[b_,r2__]:>SSumUniteRuleHelper[k a,b,{r1},{r2}],
 	SSum[a_,r1__]+ k_ SSum[b_,r2__]:>SSumUniteRuleHelper[a,k b,{r1},{r2}],
 	k1_ SSum[a_,r1__]+ k2_ SSum[b_,r2__]:>SSumUniteRuleHelper[k1 a,k2 b,{r1},{r2}],
@@ -177,10 +201,10 @@ TensorSimplifyDeltaMapper[e_,idx_]:=(e//.{
 	Tensor[TensorDeltaSymbol,a__][i_,j_]:>If[MemberQ[idx,i],Sow[i];1,If[MemberQ[idx,j],Sow[j];1]]
 });
 TensorSimplifyMetricsMapper[t:Tensor[_,0,2]][e_,idx_]:=(e//.{
-	t[a_,b_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[c,a]),
-	t[a_,b_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[c,a]),
-	t[b_,a_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[c,a]),
-	t[b_,a_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[c,a])
+	t[a_,b_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[][c,a]),
+	t[a_,b_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[][c,a]),
+	t[b_,a_]TensorContr[t][b_,c_]:>(Sow[b];TensorDelta[][c,a]),
+	t[b_,a_]TensorContr[t][c_,b_]:>(Sow[b];TensorDelta[][c,a])
 });
 TensorSimplifyHelper[idx_,Plus[a_,b__],r_] := Plus@@((TensorSimplifyHelper[idx,#,r]&)/@{a,b});
 TensorSimplifyHelper[idx_,SSum[e_,l__],r_] := TensorSimplifyHelper[idx~Join~{l},e,r];
@@ -229,30 +253,36 @@ TopoSortInv[l_,p_,c_,vars_]:=Module[{ls,l0,r1,r2,l1,l2},
 	\:0417\:0434\:0435\:0441\:044c \:0441\:0447\:0438\:0442\:0430\:0435\:043c, \:0447\:0442\:043e \:0432\:0441\:0435 \:0432\:043e\:0437\:043c\:043e\:0436\:043d\:044b\:0435 \:0432\:044b\:0440\:0430\:0436\:0435\:043d\:0438\:044f -- \:0442\:0435\:043d\:0437\:043e\:0440\:044b \:0440\:0430\:043d\:0433\:0430 2
 	\:0438 \:043e\:0431\:044b\:0447\:043d\:044b\:0435 \:043f\:0440\:043e\:0438\:0437\:0432\:043e\:0434\:043d\:044b\:0435 \:0442\:0435\:043d\:0437\:043e\:0440\:043e\:0432 \:043f\:0440\:043e\:0438\:0437\:0432\:043e\:043b\:044c\:043d\:043e\:0433\:043e \:043f\:043e\:0440\:044f\:0434\:043a\:0430.
 	\:041f\:043e\:043b\:0435\:0437\:043d\:043e \:043f\:0440\:0438 \:0440\:0430\:0431\:043e\:0442\:0435 \:0441 \:043c\:0435\:0442\:0440\:0438\:043a\:0430\:043c\:0438.
+	
+	symSrcs \:0434\:043e\:043b\:0436\:0435\:043d \:0432\:044b\:0434\:0430\:0442\:044c \:0441\:043f\:0438\:0441\:043e\:043a \:0433\:0440\:0443\:043f\:043f \:0441\:0438\:043c\:043c\:0435\:0442\:0440\:0438\:0447\:043d\:044b\:0445 \:043d\:043e\:043c\:0435\:0440\:043e\:0432 \:0438\:043d\:0434\:0435\:043a\:0441\:043e\:0432 \:0442\:0435\:043d\:0437\:043e\:0440\:0430 (\:043f\:0440\:043e\:0438\:0437\:0432\:043e\:0434\:043d\:043e\:0439) {g1:{1,2,4},g2:{3,5}}.
  *)
-Tensor2TopoSortMapper[e_,vars_]:=Tensor2TopoSortMapper[(True&)][e,vars];
-Tensor2TopoSortMapper[symQ_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
+
+TensorTopoSortDDSymSource[x:\[Eth][a_,k__]]:=
+	(Last/@#&)/@Select[Split[MapIndexed[{#1,First@#2}&,{k}],(!(CovQ[First@#1]~Xor~CovQ[First@#2])&)],!MatchQ[First/@#,{__Cov}]&];
+TensorTopoSortDDSymSource[x_]:={};
+TensorTopoSortTensorSymSource[x:Tensor[a_,cont_,cov_][ij__]]:={Range[Length[cont]],Range[Length[cov]]+Length[cont]};
+TensorTopoSortTensorSymSource[x_]:={};
+
+TensorTopoSortMapper[e_,vars_]:=TensorTopoSortMapper[{TensorTopoSortDDSymSource,TensorTopoSortTensorSymSource}][e,vars];
+TensorTopoSortMapper[symSrcs_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
 	r1={};r2={};
 	n=1;
-	ic[x:\[Eth][a_,k__]]:=Module[{},
+	ic[x:\[Eth][a_,k__]]:=Module[{k0},
 		ic[a];
-		(AppendTo[r1,#]&)/@{k};
-		If[symQ[x],(AppendTo[r2,#]&)/@Permutations[Table[ni,{ni,n,n+Length[{k}]-1}],{2}]];
+		(AppendTo[r1,#]&)/@(Uncov/@{k});
+		(AppendTo[r2,#]&)/@Flatten[Permutations[#,{2}]&/@(Flatten[#[x]&/@symSrcs,1]+n-1),1];
 		n+=Length[{k}]];
-	ic[x:Tensor[a__][i_,j_]]:=Module[{},
-		(AppendTo[r1,#]&)/@{i,j};
-		(AppendTo[r2,#]&)/@{{n,n+1}};
-		n+=2]/;symQ[x];
-	ic[Tensor[a__][ij__]]:=Module[{},
+	ic[x:Tensor[a__][ij__]]:=Module[{t},
 		(AppendTo[r1,#]&)/@{ij};
+		(AppendTo[r2,#]&)/@Flatten[Permutations[#,{2}]&/@(Flatten[#[x]&/@symSrcs,1]+n-1),1];
 		n+=Length[{ij}]];
 	ic[a_ b_]:=Module[{},ic[a];ic[b]];
 	ic[e];
 	r0=TopoSortInv[r1,r2,(-AlphabeticOrder[ToString[#1],ToString[#2]]&),vars];
 	n=1;
 	ia[\[Eth][a_,k__]]:=Module[{y},
-	y=\[Eth]@@Join[{ia[a]},r0[[n;;n+Length[{k}]-1]]];
-	n+=Length[{k}];y];
+		y=\[Eth]@@Join[{ia[a]},MapIndexed[If[CovQ[{k}[[First@#2]]],Cov[#1],#1]&,r0[[n;;n+Length[{k}]-1]]]];
+		n+=Length[{k}];y];
 	ia[Tensor[a__][ij__]]:=Module[{y},
 		y=Tensor[a]@@r0[[n;;n+Length[{ij}]-1]];
 		n+=Length[{ij}];y];
