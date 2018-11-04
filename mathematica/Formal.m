@@ -23,7 +23,6 @@ DD[g_ h_,i_,j__]:= DD[DD[g,i]h+g DD[h,i],j];
 DD[g_ h_,i_]:= DD[g,i]h+g DD[h,i];
 
 CovQ[i_Cov]:=True;
-CovQ[\[Eth][a_,i__]]:=Or@@(CovQ/@{i});
 CovQ[_]:=False;
 Cov[i_Cov]:=i;
 Cov[\[Eth][a_,i__]]:=\[Eth][a,##]&@@(Cov/@{i});
@@ -37,14 +36,14 @@ x0[idx1_]:=(\[Eth]@@({x@@idx1[[1;;Length[{idx}]]]}~Join~idx1[[Length[{idx}]+1;;L
 
 DD2DRules=\[Eth]2DRules;
 \[Eth]2DRules[v_]:={DD[a_,i__]:>D@@Join[{a},(v[[Uncov[#]+1]]&)/@{i}]};
-\[Eth]2DRules[v_,conds_]:={x:DD[a_,i__]:>D@@Join[{a},(v[[Uncov[#]+1]]&)/@{i}]};
+\[Eth]2DRules[v_,conds_]:={x:DD[a_,i__]:>D@@Join[{a},(v[[Uncov[#]+1]]&)/@{i}]/;conds[x]};
 
 EnableFeature[Formatter[\[Eth]]]:=Module[{},
 	\[Eth]/:MakeBoxes[\[Eth][g_,a__?(MatchQ[#,(_Integer|Cov[_Integer])]&)],StandardForm]:=Module[{},
-		SubscriptBox[ToBoxes[g],ToBoxes[StringJoin[((StringJoin[{If[MatchQ[#,{__Cov}],";",","]}~Join~(ToString@*Uncov/@#)])&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)]]]]
+		SubscriptBox[ToBoxes[g],ToBoxes[StringJoin[((StringJoin[If[MatchQ[#,{__Cov}],{";"}~Join~(ToString@*Uncov/@#),{","}~Join~(ToString/@#)]])&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)]]]]
 	];
 	\[Eth]/:MakeBoxes[\[Eth][g_,a__],StandardForm]:=Module[{},
-		SubscriptBox[ToBoxes[g],RowBox[Flatten[(({If[MatchQ[#,{__Cov}],";",","]}~Join~(ToBoxes@*Uncov/@#))&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)],1]]]
+		SubscriptBox[ToBoxes[g],RowBox[Flatten[((If[MatchQ[#,{__Cov}],{";"}~Join~(ToBoxes@*Uncov/@#),{","}~Join~(ToBoxes/@#)])&)/@Split[{a},(!(CovQ[#1]~Xor~CovQ[#2])&)],1]]]
 	];
 ];
 
@@ -263,8 +262,10 @@ TensorTopoSortDDSymSource[x_]:={};
 TensorTopoSortTensorSymSource[x:Tensor[a_,cont_,cov_][ij__]]:={Range[Length[cont]],Range[Length[cov]]+Length[cont]};
 TensorTopoSortTensorSymSource[x_]:={};
 
-TensorTopoSortMapper[e_,vars_]:=TensorTopoSortMapper[{TensorTopoSortDDSymSource,TensorTopoSortTensorSymSource}][e,vars];
-TensorTopoSortMapper[symSrcs_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
+TensorTopoSortMapper[e_,vars_]:=TensorTopoSortMapper[Automatic][e,vars];
+TensorTopoSortMapper[symSrcs_]:=TensorTopoSortMapperExt[symSrcs,{}];
+TensorTopoSortMapperExt[Automatic,extSymVars_]:=TensorTopoSortMapperExt[{TensorTopoSortDDSymSource,TensorTopoSortTensorSymSource},extSymVars];
+TensorTopoSortMapperExt[symSrcs_,extSymVars_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
 	r1={};r2={};
 	n=1;
 	ic[x:\[Eth][a_,k__]]:=Module[{k0},
@@ -278,7 +279,7 @@ TensorTopoSortMapper[symSrcs_][e_,vars_]:=Module[{ic,ia,n,ni,r1,r2,r0},
 		n+=Length[{ij}]];
 	ic[a_ b_]:=Module[{},ic[a];ic[b]];
 	ic[e];
-	r0=TopoSortInv[r1,r2,(-AlphabeticOrder[ToString[#1],ToString[#2]]&),vars];
+	r0=TopoSortInv[r1,r2,(-AlphabeticOrder[ToString[#1],ToString[#2]]&),vars~Join~extSymVars];
 	n=1;
 	ia[\[Eth][a_,k__]]:=Module[{y},
 		y=\[Eth]@@Join[{ia[a]},MapIndexed[If[CovQ[{k}[[First@#2]]],Cov[#1],#1]&,r0[[n;;n+Length[{k}]-1]]]];
