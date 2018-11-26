@@ -212,7 +212,7 @@ KillT[V_,T_] := Module[{i,j,k},
 	Array[kT, {3,3}]
 ]
 
-RR[vec_] := Rot[Rot[vec]] - m vec //Simplify
+RR[vec_List] := Rot[Rot[vec]] - m vec //Simplify
 
 KillV[V_,A_] := Module[{i,k},
 	Do[kV[i] = Sum[
