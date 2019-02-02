@@ -9,21 +9,25 @@
 
 
 (* ::Input::Initialization:: *)
-SetAttributes[Intern,HoldAll];
-Intern[x_,v_]:=(x=v)/;!ValueQ[x];
-Intern[x_,v_]:=x/;ValueQ[x];
-Intern[x_,v_,c_]:=(x=v)/;!ValueQ[x];
-Intern[x_,v_,c_]:=If[!c[x],x,x=v]/;ValueQ[x];
+$globalCache=<||>;
+$globalCacheFile=Null;
 
 
 (* ::Input::Initialization:: *)
-SetAttributes[Cache,HoldFirst];
-Cache[expr_,c_:(False&)]:=
-With[{x=Extract[Unevaluated[expr],{1}]},
-With[{c0=Hold[Evaluate@x]===Extract[Unevaluated[expr],{1},Hold]},
-If[c0||!c0&&c[x],expr,x]
+Attributes[Intern]={HoldAll};
+Intern[key_,val_, c_Function:(False&)]:=With[{t=$globalCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},AppendTo[$globalCache,Hold[key]->v]; v], t]];
+
+Attributes[Cached]={HoldAll};
+Cached[expr_, c_Function:(False&)]:=With[{x=Extract[Unevaluated[expr],{1}], x0=Extract[Unevaluated[expr],{1},Hold]},With[{c0=Hold[Evaluate@x]===x0},
+If[c0||!c0&&c[x],expr;AppendTo[$globalCache,x0->x];x,x]
 ]
 ];
+Cached[key_,val_, c_Function:(False&)]:=Unevaluated[key]=Intern[key, val,c];
+
+DumpCache[file_String]:=(DumpSave[file, $globalCache];);
+DumpCache[]:=If[$globalCacheFile=!=Null,DumpCache[$globalCacheFile]];
+RestoreCache[file_String]:=Get[file];
+RestoreCache[]:=If[$globalCacheFile=!=Null,RestoreCache[$globalCacheFile]];
 
 
 (* ::Section::Closed:: *)
@@ -35,9 +39,9 @@ If[c0||!c0&&c[x],expr,x]
 
 
 (* ::Code:: *)
-(*{Intern[var1,Echo[val1]],var1}*)
-(*{Intern[var1,Echo[val1]],var1}*)
-(*{Intern[var1,Echo[val2]],var1}*)
+(*{Cached[var1=Echo[val1]],var1}*)
+(*{Cached[var1=Echo[val1]],var1}*)
+(*{Cached[var1=Echo[val2]],var1}*)
 
 
 (* ::Text:: *)
@@ -45,8 +49,8 @@ If[c0||!c0&&c[x],expr,x]
 
 
 (* ::Code:: *)
-(*{Intern[var2,Echo[val1]],var2}*)
-(*{Intern[var2,Echo[val2]],var2}*)
+(*{Cached[var2=Echo[val1]],var2}*)
+(*{Cached[var2=Echo[val2]],var2}*)
 
 
 (* ::Text:: *)
@@ -54,33 +58,5 @@ If[c0||!c0&&c[x],expr,x]
 
 
 (* ::Code:: *)
-(*{Intern[var3,Echo[val1]],var3}*)
-(*{Intern[var3,Echo[val2],#===val1&],var3}*)
-
-
-(* ::Text:: *)
-(*\:041d\:0430\:043f\:0435\:0447\:0430\:0442\:0430\:0435\:0442 val1 \:043e\:0434\:0438\:043d \:0440\:0430\:0437.*)
-
-
-(* ::Code:: *)
-(*{Cache[var1=Echo[val1]],var1}*)
-(*{Cache[var1=Echo[val1]],var1}*)
-(*{Cache[var1=Echo[val2]],var1}*)
-
-
-(* ::Text:: *)
-(*\:041d\:0430\:043f\:0435\:0447\:0430\:0442\:0430\:0435\:0442 val1 \:043e\:0434\:0438\:043d \:0440\:0430\:0437.*)
-
-
-(* ::Code:: *)
-(*{Cache[var2=Echo[val1]],var2}*)
-(*{Cache[var2=Echo[val2]],var2}*)
-
-
-(* ::Text:: *)
-(*\:041d\:0430\:043f\:0435\:0447\:0430\:0442\:0430\:0435\:0442 \:043e\:0431\:0430 \:0440\:0430\:0437\:0430.*)
-
-
-(* ::Code:: *)
-(*{Cache[var3=Echo[val1]],var3}*)
-(*{Cache[var3=Echo[val2],#===val1&],var3}*)
+(*{Cached[var3=Echo[val1]],var3}*)
+(*{Cached[var3=Echo[val2],#===val1&],var3}*)
