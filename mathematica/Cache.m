@@ -25,6 +25,10 @@ If[MissingQ[t]||!MissingQ[t]&&c[t],expr;AppendTo[$globalCache,x0->x];DumpCache[]
 ];
 Cached[key_,val_, c_Function:(False&)]:=Unevaluated[key]=Intern[key, val,c];
 
+Attributes[AllCached]={HoldAll};
+AllCached[exprs_List]:=Do[With[{t=Extract[Unevaluated[exprs],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[exprs]]}];
+AllCached[exprs__]:=Do[With[{t=Extract[Unevaluated[{exprs}],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[{exprs}]]}];
+
 DumpCache[file_String]:=(DumpSave[file, $globalCache];);
 DumpCache[]:=If[$globalCacheFile=!=Null,DumpCache[$globalCacheFile]];
 RestoreCache[file_String]:=Get[file];
@@ -32,7 +36,7 @@ RestoreCache[]:=If[$globalCacheFile=!=Null,RestoreCache[$globalCacheFile]];
 RestoreCacheOnce[]:=If[$globalCache==<||>,RestoreCache[]];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*\:041f\:0440\:0438\:043c\:0435\:0440\:044b \:0438 \:0442\:0435\:0441\:0442\:044b*)
 
 
