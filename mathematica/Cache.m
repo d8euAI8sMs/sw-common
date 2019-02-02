@@ -15,11 +15,12 @@ $globalCacheFile=Null;
 
 (* ::Input::Initialization:: *)
 Attributes[Intern]={HoldAll};
-Intern[key_,val_, c_Function:(False&)]:=With[{t=$globalCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},AppendTo[$globalCache,Hold[key]->v]; v], t]];
+Intern[key_,val_, c_Function:(False&)]:=With[{t=$globalCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},AppendTo[$globalCache,Hold[key]->v];DumpCache[]; v], t]];
 
 Attributes[Cached]={HoldAll};
-Cached[expr_, c_Function:(False&)]:=With[{x=Extract[Unevaluated[expr],{1}], x0=Extract[Unevaluated[expr],{1},Hold]},With[{c0=Hold[Evaluate@x]===x0},
-If[c0||!c0&&c[x],expr;AppendTo[$globalCache,x0->x];x,x]
+Cached[expr_, c_Function:(False&)]:=With[{x=Extract[Unevaluated[expr],{1}], x0=Extract[Unevaluated[expr],{1},Hold]},
+With[{t=$globalCache[x0]},
+If[MissingQ[t]||!MissingQ[t]&&c[t],expr;AppendTo[$globalCache,x0->x];DumpCache[];x,Module[{eq={Extract[Unevaluated[expr],{1},Unevaluated],t}},eq[[0]]=Set;eq;];x]
 ]
 ];
 Cached[key_,val_, c_Function:(False&)]:=Unevaluated[key]=Intern[key, val,c];
@@ -28,9 +29,10 @@ DumpCache[file_String]:=(DumpSave[file, $globalCache];);
 DumpCache[]:=If[$globalCacheFile=!=Null,DumpCache[$globalCacheFile]];
 RestoreCache[file_String]:=Get[file];
 RestoreCache[]:=If[$globalCacheFile=!=Null,RestoreCache[$globalCacheFile]];
+RestoreCacheOnce[]:=If[$globalCache==<||>,RestoreCache[]];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*\:041f\:0440\:0438\:043c\:0435\:0440\:044b \:0438 \:0442\:0435\:0441\:0442\:044b*)
 
 
