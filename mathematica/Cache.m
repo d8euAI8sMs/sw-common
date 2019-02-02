@@ -9,18 +9,42 @@
 
 
 (* ::Input::Initialization:: *)
-$globalCache=<||>;
-$globalCacheFile=Null;
+$taggedCaches=<||>;
+$currentCacheTag="Global";
+$currentCache:=GetCache[];
+$cacheDir=Null;
+
+EnsureCache[tag_String]:=With[{c=$taggedCaches[tag]}, If[MissingQ[c],AppendTo[$taggedCaches,tag-><||>]]];
+
+GetCache[] :=GetCache[GetCurrentCacheTag[]];
+GetCache[tag_String]:=(EnsureCache[tag];$taggedCaches[tag]);
+GetCacheFile[]:=GetCache[GetCurrentCacheTag[]];
+GetCacheFile[tag_String]:=(EnsureCache[tag];$taggedCaches[tag]);
+SetCache[cache_Association]:=SetCache[GetCurrentCacheTag[],cache];
+SetCache[tag_String,cache_Association]:=(EnsureCache[tag];$taggedCaches[[Key[tag]]]=cache);
+
+GetCurrentCacheTag[]:=$currentCacheTag;
+SetCurrentCacheTag[tag_String]:=$currentCacheTag=tag;
+
+SetAttributes[InCache,{HoldRest}];
+InCache[tag_String,expr_]:=Block[{$currentCacheTag=tag},expr];
+
+GetFromCache[key_]:=GetFromCache[GetCurrentCacheTag[],key];
+GetFromCache[tag_String,key_]:=(EnsureCache[tag];$taggedCaches[[Key[tag],Key[key]]]);
+PutToCache[val_]:=PutToCache[GetCurrentCacheTag[],val];
+PutToCache[tag_String,val_]:=(EnsureCache[tag];AppendTo[$taggedCaches[[Key[tag]]],val]);
+DeleteFromCache[key_]:=DeleteFromCache[GetCurrentCacheTag[],key];
+DeleteFromCache[tag_String,key_]:=(EnsureCache[tag];$taggedCaches[[Key[tag]]]=Delete[$taggedCaches[[Key[tag]]],Key[key]]);
 
 
 (* ::Input::Initialization:: *)
 Attributes[Intern]={HoldAll};
-Intern[key_,val_, c_Function:(False&)]:=With[{t=$globalCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},AppendTo[$globalCache,Hold[key]->v];DumpCache[]; v], t]];
+Intern[key_,val_, c_Function:(False&)]:=With[{t=GetFromCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},PutToCache[Hold[key]->v];DumpCache[]; v], t]];
 
 Attributes[Cached]={HoldAll};
 Cached[expr_, c_Function:(False&)]:=With[{x=Extract[Unevaluated[expr],{1}], x0=Extract[Unevaluated[expr],{1},Hold]},
-With[{t=$globalCache[x0]},
-If[MissingQ[t]||!MissingQ[t]&&c[t],expr;AppendTo[$globalCache,x0->x];DumpCache[];x,Module[{eq={Extract[Unevaluated[expr],{1},Unevaluated],t}},eq[[0]]=Set;eq;];x]
+With[{t=GetFromCache[x0]},
+If[MissingQ[t]||!MissingQ[t]&&c[t],expr;PutToCache[x0->x];DumpCache[];x,Module[{eq={Extract[Unevaluated[expr],{1},Unevaluated],t}},eq[[0]]=Set;eq;];x]
 ]
 ];
 Cached[key_,val_, c_Function:(False&)]:=Unevaluated[key]=Intern[key, val,c];
@@ -29,11 +53,27 @@ Attributes[AllCached]={HoldAll};
 AllCached[exprs_List]:=Do[With[{t=Extract[Unevaluated[exprs],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[exprs]]}];
 AllCached[exprs__]:=Do[With[{t=Extract[Unevaluated[{exprs}],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[{exprs}]]}];
 
-DumpCache[file_String]:=(DumpSave[file, $globalCache];);
-DumpCache[]:=If[$globalCacheFile=!=Null,DumpCache[$globalCacheFile]];
-RestoreCache[file_String]:=Get[file];
-RestoreCache[]:=If[$globalCacheFile=!=Null,RestoreCache[$globalCacheFile]];
-RestoreCacheOnce[]:=If[$globalCache==<||>,RestoreCache[]];
+Attributes[Uncache]={HoldAll};
+Uncache[keys__]:=(Do[With[{k=Extract[Unevaluated[{keys}],{i},Hold]},Print[k];DeleteFromCache[k]],{i,Length[Unevaluated[{keys}]]}];DumpCache[]);
+
+ClearCache[] := (SetCache[<||>]; DumpCache[]);
+
+DumpCache[]:=If[$cacheDir=!=Null,DumpCache[$cacheDir]];
+DumpCache[dir_String]:=Do[
+Quiet@CreateDirectory[dir];
+Block[{$cacheData=GetCache[tag],$cacheTag=tag},
+DumpSave[FileNameJoin[{dir,tag<>".cache.mx"}],{$cacheData,$cacheTag}]]
+,{tag,Keys[$taggedCaches]}];
+
+RestoreCache[dir_String]:=With[{files=FileNames["*.cache.mx",dir]},
+Do[
+Block[{$cacheData,$cacheTag},
+Get[file];
+SetCache[$cacheTag,$cacheData]
+]
+,{file,files}]
+];
+RestoreCache[]:=If[$cacheDir=!=Null,RestoreCache[$cacheDir]];
 
 
 (* ::Section::Closed:: *)
