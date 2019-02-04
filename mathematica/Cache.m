@@ -42,9 +42,9 @@ Attributes[Intern]={HoldAll};
 Intern[key_,val_, c_Function:(False&)]:=With[{t=GetFromCache[Hold[key]]},If[MissingQ[t]||!MissingQ[t]&&c[t],With[{v=val},PutToCache[Hold[key]->v];DumpCache[]; v], t]];
 
 Attributes[Cached]={HoldAll};
-Cached[expr_, c_Function:(False&)]:=With[{x=Extract[Unevaluated[expr],{1}], x0=Extract[Unevaluated[expr],{1},Hold]},
+Cached[expr_, c_Function:(False&)]:=With[{x0=Extract[Unevaluated[expr],{1},Hold]},
 With[{t=GetFromCache[x0]},
-If[MissingQ[t]||!MissingQ[t]&&c[t],expr;PutToCache[x0->x];DumpCache[];x,Module[{eq={Extract[Unevaluated[expr],{1},Unevaluated],t}},eq[[0]]=Set;eq;];x]
+If[MissingQ[t]||!MissingQ[t]&&c[t],expr;PutToCache[x0->ReleaseHold[x0]];DumpCache[];ReleaseHold[x0],Module[{eq={Extract[Unevaluated[expr],{1},Unevaluated],t}},eq[[0]]=Set;eq;];x]
 ]
 ];
 Cached[key_,val_, c_Function:(False&)]:=Unevaluated[key]=Intern[key, val,c];
@@ -54,7 +54,7 @@ AllCached[exprs_List]:=Do[With[{t=Extract[Unevaluated[exprs],{i},Unevaluated]},C
 AllCached[exprs__]:=Do[With[{t=Extract[Unevaluated[{exprs}],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[{exprs}]]}];
 
 Attributes[Uncache]={HoldAll};
-Uncache[keys__]:=(Do[With[{k=Extract[Unevaluated[{keys}],{i},Hold]},Print[k];DeleteFromCache[k]],{i,Length[Unevaluated[{keys}]]}];DumpCache[]);
+Uncache[keys__]:=(Do[With[{k=Extract[Unevaluated[{keys}],{i},Hold]};DeleteFromCache[k]],{i,Length[Unevaluated[{keys}]]}];DumpCache[]);
 
 ClearCache[] := (SetCache[<||>]; DumpCache[]);
 
@@ -69,7 +69,13 @@ RestoreCache[dir_String]:=With[{files=FileNames["*.cache.mx",dir]},
 Do[
 Block[{$cacheData,$cacheTag},
 Get[file];
-SetCache[$cacheTag,$cacheData]
+SetCache[$cacheTag,$cacheData];
+Do[
+Module[{eq={Extract[k,{1},Unevaluated],$cacheData[k]}},
+eq[[0]]=Set;
+eq;
+]
+,{k,Keys[$cacheData]}]
 ]
 ,{file,files}]
 ];
