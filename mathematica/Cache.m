@@ -54,7 +54,7 @@ AllCached[exprs_List]:=Do[With[{t=Extract[Unevaluated[exprs],{i},Unevaluated]},C
 AllCached[exprs__]:=Do[With[{t=Extract[Unevaluated[{exprs}],{i},Unevaluated]},Cached[t]],{i,Length[Unevaluated[{exprs}]]}];
 
 Attributes[Uncache]={HoldAll};
-Uncache[keys__]:=(Do[With[{k=Extract[Unevaluated[{keys}],{i},Hold]};DeleteFromCache[k]],{i,Length[Unevaluated[{keys}]]}];DumpCache[]);
+Uncache[keys__]:=(Do[With[{k=Extract[Unevaluated[{keys}],{i},Hold]},DeleteFromCache[k]],{i,Length[Unevaluated[{keys}]]}];DumpCache[]);
 
 ClearCache[] := (SetCache[<||>]; DumpCache[]);
 
