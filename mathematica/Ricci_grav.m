@@ -35,13 +35,13 @@ GGS := {
 }
 Spher := Ricci[{ct,r,u,w}, Make4Metrics[GGS]]
 
-Make4Metrics[m3_,v_:{0,0,0}]:=Table[If[i==0&&j==0,1,If[i==0,v[[j]],If[j==0,v[[i]],m3[[i,j]]]]],{i,0,3},{j,0,3}];
+Make4Metrics[m3_,v_:{0,0,0}]:=Table[If[i==0&&j==0,1,If[i==0,v[[j]],If[j==0,v[[i]],-m3[[i,j]]]]],{i,0,3},{j,0,3}];
 
 Ricci[coords_,mtr_] := Module[{DG,ss,i,j,k,s,zzzz},
 	Do[x[i-1] = coords[[i]],{i,4}];
 	DG = Det[mtr] //Simplify;
 	ss = Solve[zzzz^2 == DG, zzzz];
-	gd = zzzz /. ss[[1]];
+	gd = Sqrt[-DG]//PowerExpand;
 	HH = Inverse[mtr] //Simplify;
 	Do[
 		Do[
