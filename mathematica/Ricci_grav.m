@@ -35,7 +35,12 @@ GGS := {
 }
 Spher := Ricci[{ct,r,u,w}, Make4Metrics[GGS]]
 
-Make4Metrics[m3_,v_:{0,0,0}]:=Table[If[i==0&&j==0,1,If[i==0,v[[j]],If[j==0,v[[i]],-m3[[i,j]]]]],{i,0,3},{j,0,3}];
+Make4Metrics[m3cov_,vcontr_:{0,0,0}]:=Module[{vcov,g00, g0i,i,j},
+	vcov = Table[Sum[m3cov[[i,j]]vcontr[[i]],{i,3}],{j,3}];
+	g0i = vcov;
+	g00 = 1 - Sum[vcov[[i]]vcontr[[i]],{i,3}];
+	Table[If[i==0&&j==0,g00,If[i==0,g0i[[j]],If[j==0,g0i[[i]],-m3cov[[i,j]]]]],{i,0,3},{j,0,3}]
+];
 
 Ricci[coords_,mtr_] := Module[{DG,ss,i,j,k,s,zzzz},
 	Do[x[i-1] = coords[[i]],{i,4}];
