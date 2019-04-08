@@ -942,7 +942,7 @@ FUNCTION {author.before}
 {
   author empty$
     'skip$
-    {author num.names$ #4 <
+    {author num.names$ #10 <
       {format.authors output
        new.sentence}
       'skip$
@@ -954,7 +954,7 @@ FUNCTION {bookauthor.before}
 {
   bookauthor empty$
     'skip$
-    {bookauthor num.names$ #4 <
+    {bookauthor num.names$ #10 <
       {format.bookauthors output
        new.sentence}
       'skip$
