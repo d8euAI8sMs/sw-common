@@ -84,14 +84,15 @@ Ricci[coords_,mtr_] := Module[{DG,ss,i,j,k,s,zzzz},
 
 
 ddd[h_,i_,j_,k_] := D[h[[i,j]], x[k]] - Sum[(cs2[s,i,k] h[[s,j]] + cs2[s,j,k] h[[i,s]]), {s,3}] //S
+dd[h_,i_,j_] := D[h[[i]], x[j]] - Sum[cs2[s,i,j] h[[s]], {s,3}] //S
 
-Lag20[h_] := Module[{e,i,j,k},
+Lag20[h_,vCov_:{0,0,0}] := Module[{e,i,j,k,V=vCov},
 	Do[e[i,j,k] = 0, {i,3}, {j,3}, {k,3}];
 	e[1,2,3] = e[2,3,1] = e[3,1,2] = 1;
 	e[1,3,2] = e[3,2,1] = e[2,1,3] = -1;
 	Do[b[i,j] = Sum[e[i,k,l] ddd[h,j,k,l], {k,3}, {l,3}], {i,3}, {j,3}];
 	Ub = Sum[b[i,j] b[j,i], {i,3}, {j,3}] / 2 //S //Expand;
-	Do[ee[i,j] = D[h[[i,j]], t], {i,3}, {j,3}];
+	Do[ee[i,j] = D[h[[i,j]], t]+dd[V,i,j]+dd[V,j,i], {i,3}, {j,3}];
 	HT =
 		hh[1,1] hh[2,2] (ee[1,2]^2 - ee[1,1] ee[2,2]) +
 		hh[1,1] hh[3,3] (ee[1,3]^2 - ee[1,1] ee[3,3]) +
