@@ -30,7 +30,7 @@ Uncov[Cov[i_]]:=i;
 Uncov[\[Eth][a_,i__]]:=\[Eth][a,##]&@@(Uncov/@{i});
 Uncov[i_]:=i;
 
-CovExpand[e_]:=e//.{\[Eth][(x:Tensor[a_,cont_,cov_])[idx__],i___,Cov[j_],Shortest[k___]]:>Module[{l,p,t,m,cov0=cov~Join~Range[Length[cov]+1,Length[cov]+Length[{i}]],idx0={idx}~Join~{i},x0},
+CovExpand[e_]:=e//.{\[Eth][(x:Tensor[a_,cont_,cov_])[idx___],i___,Cov[j_],Shortest[k___]]:>Module[{l,p,t,m,cov0=cov~Join~Range[Length[cov]+1,Length[cov]+Length[{i}]],idx0={idx}~Join~{i},x0},
 x0[idx1_]:=(\[Eth]@@({x@@idx1[[1;;Length[{idx}]]]}~Join~idx1[[Length[{idx}]+1;;Length[idx1]]]))/.{\[Eth][g_]:>g};
 \[Eth][(\[Eth][x0[idx0],j]/.{\[Eth][g_]:>g})-Sum[SSum[x0[MapAt[If[CovQ[#],Cov[m],m]&,idx0,l]]TensorChristoffel[][m,j,Uncov[idx0[[l]]]],m],{l,cov0}]+Sum[SSum[x0[MapAt[If[CovQ[#],Cov[m],m]&,idx0,l]]TensorChristoffel[][Uncov[idx0[[l]]],j,m],m],{l,cont}],k]/.{\[Eth][g_]:>g}]}
 
@@ -92,9 +92,9 @@ TensorQAlt[t_,g_Symbol,l_Integer]:=TensorQAlt[t,g]&&TensorLength[t]==l;
 TensorQAlt[t_,l_Integer]:=TensorQAlt[t]&&TensorLength[t]==l;
 
 EnableFeature[Formatter[Tensor]]:=Module[{$fmt,$v},
-	$fmt[a_,idx__Integer]:=ToBoxes[StringJoin@Table[ToString[{idx}[[a[[$v]]]]],{$v,Length[a]}]];
-	$fmt[a_,idx__]:=RowBox[Table[ToBoxes[{idx}[[a[[$v]]]]],{$v,Length[a]}]];
-	Tensor/:MakeBoxes[Tensor[g_,cont_,cov_][idx__],StandardForm]:=Module[{},
+	$fmt[a_,idx___Integer]:=ToBoxes[StringJoin@Table[ToString[{idx}[[a[[$v]]]]],{$v,Length[a]}]];
+	$fmt[a_,idx___]:=RowBox[Table[ToBoxes[{idx}[[a[[$v]]]]],{$v,Length[a]}]];
+	Tensor/:MakeBoxes[Tensor[g_,cont_,cov_][idx___],StandardForm]:=Module[{},
 		SubsuperscriptBox[If[AtomQ[g],ToBoxes[g],RowBox[{"(",ToBoxes[g],")"}]],$fmt[cov,idx],$fmt[cont,idx]]
 	];
 	Tensor/:MakeBoxes[Tensor[g_,cont_,cov_],StandardForm]:=Module[{},
